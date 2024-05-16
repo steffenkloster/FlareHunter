@@ -58,6 +58,8 @@ python flarehunter.py domains ip_list_file
 python flarehunter.py example.com,www.example.com ip_list.txt --threads 10 --verbose 2 --timeout 10 --search-text "Welcome" --case-sensitive
 ```
 
+![Terminal video](https://github.com/steffenkloster/gallery/blob/main/HASt-render1715869446193.gif?raw=true)
+
 ## Acknowledgements
 
 This project is heavily inspired by [Alaa-abdulridha's CloudSniffer](https://github.com/Alaa-abdulridha/CloudSniffer "Github Repo").
