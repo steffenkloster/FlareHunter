@@ -4,7 +4,7 @@ FlareHunter is a robust tool designed to aid in the discovery of the real IP add
 
 FlareHunter doesn't modify the systems `hosts` file, so it can test multiple IP addresses at the same time.
 
-[![License](https://img.shields.io/github/license/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/steffenkloster/FlareHunter?2)](https://github.com/steffenkloster/FlareHunter/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/network/members)
 [![GitHub issues](https://img.shields.io/github/issues/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/issues)
