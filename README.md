@@ -2,6 +2,13 @@
 
 FlareHunter is a robust tool designed to aid in the discovery of the real IP address of websites protected by Cloudflare. Utilizing advanced asynchronous requests and multi-threading capabilities, FlareHunter efficiently checks multiple domains against a list of IP addresses to reveal the actual IP behind the target website. By examining server responses and employing customizable search parameters, FlareHunter aims to uncover the true IP address, bypassing Cloudflare's protection mechanisms.
 
+FlareHunter doesn't modify the systems `hosts` file, so it can test multiple IP addresses at the same time.
+
+[![License](https://img.shields.io/github/license/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/steffenkloster/FlareHunter)](https://github.com/steffenkloster/FlareHunter/issues)
+
 ## Features
 
 - **Multi-threaded Processing**: Define the number of concurrent threads for efficient parallel processing.
@@ -10,6 +17,10 @@ FlareHunter is a robust tool designed to aid in the discovery of the real IP add
 - **Error Handling**: Detailed error handling and verbose logging options to monitor and debug the scanning process.
 - **Progress Tracking**: Real-time progress bars using `tqdm` to track the overall progress of IP and domain checks.
 - **Signal Handling**: Support for pausing and stopping the script gracefully with signal handling.
+
+## Requirements
+
+You need Python >= 3.6 to run FlareHunter.
 
 ## Installation
 
