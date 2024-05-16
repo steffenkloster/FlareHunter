@@ -1,4 +1,4 @@
-# FlareHunter
+# 🐍 FlareHunter
 
 FlareHunter is a robust tool designed to aid in the discovery of the real IP address of websites protected by Cloudflare. Utilizing advanced asynchronous requests and multi-threading capabilities, FlareHunter efficiently checks multiple domains against a list of IP addresses to reveal the actual IP behind the target website. By examining server responses and employing customizable search parameters, FlareHunter aims to uncover the true IP address, bypassing Cloudflare's protection mechanisms.
 
@@ -64,4 +64,15 @@ This project is heavily inspired by [Alaa-abdulridha's CloudSniffer](https://git
 
 ## Disclaimer
 
-This tool is intended for educational and security research purposes only. Use responsibly and **only on domains and IPs that you have permission to test**. The author is not responsible for any misuse or damage caused by this tool.
+**⚠️ Use FlareHunter only on domains and IP addresses for which you have explicit permission to perform testing.**
+
+FlareHunter is intended for educational and security research purposes only. It is designed to help security professionals, researchers, and developers understand the implications of Cloudflare's protection mechanisms and identify potential vulnerabilities in a controlled and authorized environment.
+
+**Important:**
+
+- **Authorization**: Ensure that you have explicit permission from the target website owner before using FlareHunter to discover real IP addresses. Unauthorized use of this tool on websites without permission is illegal and unethical.
+- **Responsibility**: The developers and maintainers of FlareHunter are not responsible for any misuse or illegal activity conducted with this tool. Users are solely responsible for their actions and must comply with all applicable laws and regulations.
+- **Ethical Use**: Use FlareHunter responsibly and ethically. The primary goal of this tool is to promote better security practices by identifying weaknesses and helping to fortify defenses against potential threats.
+- **No Warranty**: FlareHunter is provided "as is" without any warranty of any kind, either expressed or implied. The developers and maintainers do not guarantee that the tool will be effective in all scenarios or that it will not cause unintended consequences.
+
+By using FlareHunter, you agree to adhere to this disclaimer and use the tool in a responsible, ethical, and legal manner.
