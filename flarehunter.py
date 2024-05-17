@@ -188,7 +188,7 @@ async def main(domains, ip_list_file, threads, proxy):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check domains against IPs")
     parser.add_argument("domains", help="Comma-separated list of domains")
-    parser.add_argument("ip_list_file", help="File containing list of IP addresses")
+    parser.add_argument("ip_list_file", help="File containing list of IP addresses (one per line, or ranges with '-' or CIDR notation)")
     parser.add_argument("--verbose", type=int, choices=[0, 1, 2], default=0, help="Set verbosity level (0, 1, or 2)")
     parser.add_argument("--timeout", metavar="seconds", type=int, default=5, help="The timeout for each request in seconds")
     parser.add_argument("--search-text", type=str, help="Text to look for in the title")
