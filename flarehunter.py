@@ -24,6 +24,7 @@ timeout = 5
 search_text = None
 case_sensitive = False
 proxy = None
+follow_redirects = False
 
 class CustomResolver(DefaultResolver):
     def __init__(self, custom_mapping):
@@ -76,7 +77,7 @@ async def fetch(session, url, ip, domain, pbar):
     logger.debug(f"Sending request to {url} with headers {headers}")
 
     try:
-        async with session.get(url, timeout=timeout, ssl=False, headers=headers, proxy=proxy, allow_redirects=False) as response:
+        async with session.get(url, timeout=timeout, ssl=False, headers=headers, proxy=proxy, allow_redirects=follow_redirects) as response:
             logger.debug(f"Received response: Status={response.status}, URL={response.url}")
 
             if response.status == 200:
@@ -196,6 +197,7 @@ if __name__ == "__main__":
     parser.add_argument("--threads", type=int, default=5, help="Number of concurrent threads")
     parser.add_argument("--proxy", type=str, help="Proxy URL (e.g., http://localhost:8080)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--follow-redirects", action="store_true", help="Follow HTTP redirects (301, 302)")
 
     args = parser.parse_args()
     
@@ -215,6 +217,7 @@ if __name__ == "__main__":
     case_sensitive = args.case_sensitive
     threads = args.threads
     proxy = args.proxy
+    follow_redirects = args.follow_redirects
 
     signal.signal(signal.SIGINT, handle_signal)
 
