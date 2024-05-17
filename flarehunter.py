@@ -1,3 +1,4 @@
+import logging
 import aiohttp
 import asyncio
 import os
@@ -25,6 +26,7 @@ verbose = 0
 timeout = 5
 search_text = None
 case_sensitive = False
+proxy = None
 
 def handle_signal(sig, frame):
     global paused, stopped
@@ -47,14 +49,33 @@ async def fetch(session, url, ip, domain, pbar):
     if stopped:
         raise asyncio.CancelledError
 
-    headers = {'Host': domain}
+    headers = {
+        'Host': domain,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Te': 'trailers'
+    }
+
+    logger.debug(f"Sending request to {url} with headers {headers}")
 
     try:
-        async with session.get(url, timeout=timeout, ssl=False, headers=headers) as response:
+        async with session.get(url, timeout=timeout, ssl=False, headers=headers, proxy=proxy, allow_redirects=False) as response:
+            logger.debug(f"Received response: Status={response.status}, URL={response.url}")
+
             if response.status == 200:
                 await handle_response(response, ip, domain)
             elif response.status in {301, 302}:
-                tqdm.write(f"{Fore.YELLOW}Redirect found, real IP for domain {domain} might be: {ip}{Style.RESET_ALL}")
+                location = response.headers.get('Location')
+                logger.debug(f"Redirect found: Location={location}")
+                tqdm.write(f"{Fore.YELLOW}Redirect found, real IP for domain {domain} might be: {ip}. Location: {location}{Style.RESET_ALL}")
     except (aiohttp.ClientConnectorError, aiohttp.ClientResponseError,
             aiohttp.ServerTimeoutError, aiohttp.InvalidURL, asyncio.TimeoutError) as e:
         log_error(ip, domain, e)
@@ -66,11 +87,16 @@ async def fetch(session, url, ip, domain, pbar):
 async def handle_response(response, ip, domain):
     global search_text, case_sensitive, verbose
 
+    # Read the response content
     content = await response.read()
     detected_encoding = chardet.detect(content)['encoding']
     html = content.decode(detected_encoding, errors='replace')
+
+    # Parse the HTML content
     soup = BeautifulSoup(html, 'html.parser')
     title = soup.title.string.strip() if soup.title else 'No title found'
+
+    logger.debug(f"Response content: {html[:200]}...")  # Log first 200 chars for brevity
 
     if search_text:
         found = search_text in title if case_sensitive else search_text.lower() in title.lower()
@@ -117,7 +143,7 @@ async def process_ip(ip, domains, semaphore, pbar):
     async with semaphore:
         await check_domains(domains, ip, pbar)
 
-async def main(domains, ip_list_file, threads):
+async def main(domains, ip_list_file, threads, proxy):
     async with aio_open(ip_list_file, 'r') as f:
         ip_list = await f.readlines()
     ip_list = [ip.strip() for ip in ip_list]
@@ -139,8 +165,18 @@ if __name__ == "__main__":
     parser.add_argument("--search-text", type=str, help="Text to look for in the title")
     parser.add_argument("--case-sensitive", action="store_true", help="Make text search case sensitive")
     parser.add_argument("--threads", type=int, default=5, help="Number of concurrent threads")
+    parser.add_argument("--proxy", type=str, help="Proxy URL (e.g., http://localhost:8080)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
+    
+    # Set logging level based on --debug flag
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logger = logging.getLogger(__name__)
     
     domains = args.domains.split(',')
     ip_list_file = args.ip_list_file
@@ -149,10 +185,11 @@ if __name__ == "__main__":
     search_text = args.search_text
     case_sensitive = args.case_sensitive
     threads = args.threads
+    proxy = args.proxy
 
     signal.signal(signal.SIGINT, handle_signal)
 
     try:
-        asyncio.run(main(domains, ip_list_file, threads))
+        asyncio.run(main(domains, ip_list_file, threads, proxy))
     except KeyboardInterrupt:
         print(f"{Fore.RED}Script interrupted.{Style.RESET_ALL}")
