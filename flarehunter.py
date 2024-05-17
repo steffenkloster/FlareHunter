@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 from colorama import Fore, Back, Style, init
 import chardet
+import ipaddress
 
 # Initialize colorama
 init(autoreset=True)
@@ -56,12 +57,7 @@ async def fetch(session, url, ip, domain, pbar):
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Te': 'trailers'
+        'Upgrade-Insecure-Requests': '1'
     }
 
     logger.debug(f"Sending request to {url} with headers {headers}")
@@ -143,10 +139,28 @@ async def process_ip(ip, domains, semaphore, pbar):
     async with semaphore:
         await check_domains(domains, ip, pbar)
 
-async def main(domains, ip_list_file, threads, proxy):
+async def parse_ip_list(ip_list_file):
     async with aio_open(ip_list_file, 'r') as f:
-        ip_list = await f.readlines()
-    ip_list = [ip.strip() for ip in ip_list]
+        ip_list_raw = await f.readlines()
+    ip_list = []
+    for line in ip_list_raw:
+        line = line.strip()
+        if '-' in line:
+            start_ip, end_ip = line.split('-')
+            ip_list.extend(str(ip) for ip in ip_range(start_ip, end_ip))
+        elif '/' in line:
+            ip_list.extend(str(ip) for ip in ipaddress.IPv4Network(line))
+        else:
+            ip_list.append(line)
+    return ip_list
+
+def ip_range(start_ip, end_ip):
+    start = int(ipaddress.IPv4Address(start_ip))
+    end = int(ipaddress.IPv4Address(end_ip))
+    return [str(ipaddress.IPv4Address(ip)) for ip in range(start, end + 1)]
+
+async def main(domains, ip_list_file, threads, proxy):
+    ip_list = await parse_ip_list(ip_list_file)
 
     semaphore = asyncio.Semaphore(threads)
     total_tasks = len(ip_list) * len(domains) * 2
@@ -159,7 +173,7 @@ async def main(domains, ip_list_file, threads, proxy):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check domains against IPs")
     parser.add_argument("domains", help="Comma-separated list of domains")
-    parser.add_argument("ip_list_file", help="File containing list of IP addresses")
+    parser.add_argument("ip_list_file", help="File containing list of IP addresses (one per line, or ranges with '-' or CIDR notation)")
     parser.add_argument("--verbose", type=int, choices=[0, 1, 2], default=0, help="Set verbosity level (0, 1, or 2)")
     parser.add_argument("--timeout", metavar="seconds", type=int, default=5, help="The timeout for each request in seconds")
     parser.add_argument("--search-text", type=str, help="Text to look for in the title")
