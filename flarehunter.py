@@ -16,6 +16,9 @@ import signal
 # Initialize colorama
 init(autoreset=True)
 
+# Filter specific warnings
+warnings.filterwarnings("ignore", message="It looks like you're parsing an XML document using an HTML parser")
+
 # Globals for signal handling and configuration
 paused = False
 stopped = False
