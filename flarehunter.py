@@ -1,24 +1,20 @@
-import logging
 import aiohttp
 import asyncio
-import os
-import sys
-import traceback
-import warnings
-import argparse
-import signal
+import aiodns
+import socket
+from aiohttp.resolver import DefaultResolver
 from aiofiles import open as aio_open
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from colorama import Fore, Back, Style, init
 import chardet
+import argparse
 import ipaddress
+import logging
+import signal
 
 # Initialize colorama
 init(autoreset=True)
-
-# Filter specific warnings
-warnings.filterwarnings("ignore", message="It looks like you're parsing an XML document using an HTML parser")
 
 # Globals for signal handling and configuration
 paused = False
@@ -28,6 +24,23 @@ timeout = 5
 search_text = None
 case_sensitive = False
 proxy = None
+
+class CustomResolver(DefaultResolver):
+    def __init__(self, custom_mapping):
+        super().__init__()
+        self.custom_mapping = custom_mapping
+
+    async def resolve(self, host, port=0, family=socket.AF_INET):
+        if host in self.custom_mapping:
+            return [{
+                'hostname': host,
+                'host': self.custom_mapping[host],
+                'port': port,
+                'family': family,
+                'proto': 0,
+                'flags': 0,
+            }]
+        return await super().resolve(host, port, family)
 
 def handle_signal(sig, frame):
     global paused, stopped
@@ -128,11 +141,13 @@ def log_general_error(ip, domain, e):
             tqdm.write(f"{Fore.RED}Traceback: {traceback.format_exc()}{Style.RESET_ALL}")
 
 async def check_domains(domains, ip, pbar):
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+    custom_resolver = CustomResolver({domain: ip for domain in domains})
+    connector = aiohttp.TCPConnector(ssl=False, resolver=custom_resolver)
+    async with aiohttp.ClientSession(connector=connector) as session:
         tasks = []
         for domain in domains:
-            tasks.append(fetch(session, f"https://{ip}", ip, domain, pbar))
-            tasks.append(fetch(session, f"http://{ip}", ip, domain, pbar))
+            tasks.append(fetch(session, f"https://{domain}", ip, domain, pbar))
+            tasks.append(fetch(session, f"http://{domain}", ip, domain, pbar))
         await asyncio.gather(*tasks)
 
 async def process_ip(ip, domains, semaphore, pbar):
@@ -147,7 +162,7 @@ async def parse_ip_list(ip_list_file):
         line = line.strip()
         if '-' in line:
             start_ip, end_ip = line.split('-')
-            ip_list.extend(str(ip) for ip in ip_range(start_ip, end_ip))
+            ip_list.extend(ip_range(start_ip, end_ip))
         elif '/' in line:
             ip_list.extend(str(ip) for ip in ipaddress.IPv4Network(line))
         else:
@@ -173,7 +188,7 @@ async def main(domains, ip_list_file, threads, proxy):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check domains against IPs")
     parser.add_argument("domains", help="Comma-separated list of domains")
-    parser.add_argument("ip_list_file", help="File containing list of IP addresses (one per line, or ranges with '-' or CIDR notation)")
+    parser.add_argument("ip_list_file", help="File containing list of IP addresses")
     parser.add_argument("--verbose", type=int, choices=[0, 1, 2], default=0, help="Set verbosity level (0, 1, or 2)")
     parser.add_argument("--timeout", metavar="seconds", type=int, default=5, help="The timeout for each request in seconds")
     parser.add_argument("--search-text", type=str, help="Text to look for in the title")
